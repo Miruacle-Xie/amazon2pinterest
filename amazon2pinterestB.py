@@ -40,13 +40,17 @@ def loginPinterest(driver, account, password):
     time.sleep(0.5)
     driver.find_element_by_xpath(
         '//*[@id="__PWS_ROOT__"]/div[1]/div/div/main/div[1]/div[2]/div[2]/div/div/div/div/div/div/div/div[4]/form/div[5]/button/div').click()
-    try:
-        WebDriverWait(driver, 30).until(EC.visibility_of_element_located(
-            (By.XPATH, '//*[@id="HeaderContent"]/div/div/div/div/div[2]/div/div/div/div[10]/button/div/div')))  # 元素是否可见
-        return True
-    except:
-        print("登陆失败")
-        return False
+    possible_xpaths = ['//*[@id="HeaderContent"]/div/div/div[2]/div/div/div/div[5]/div[5]/button/div/div', '//*[@id="HeaderContent"]/div/div/div/div/div[2]/div/div/div/div[10]/button/div/div']
+    for xpath in possible_xpaths:
+        try:
+            WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+            # WebDriverWait(driver, 30).until(EC.visibility_of_element_located(
+            #     (By.XPATH, '//*[@id="HeaderContent"]/div/div/div[2]/div/div/div/div[5]/div[5]/button/div/div')))  # 元素是否可见
+            return True
+        except:
+            pass
+    print("登陆失败")
+    return False
 
 
 def amazon2pinterest(driver, category, ASIN):
@@ -56,28 +60,32 @@ def amazon2pinterest(driver, category, ASIN):
     url = url_head + url_ASIN + url_end
     driver.get(url)
     try:
-        # WebDriverWait(driver, 30).until(
-        #     EC.visibility_of_element_located((By.XPATH, '//*[@id="pinterest"]/i')))  # 元素是否可见
         WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="pinterest"]/i')))  # 元素是否可见
+            EC.visibility_of_element_located((By.XPATH, '//*[@id="pinterest"]/i')))  # 元素是否可见
         driver.find_element_by_xpath('//*[@id="pinterest"]/i').click()
         handles = driver.window_handles
         driver.switch_to.window(handles[1])
-        WebDriverWait(driver, 20).until(
+        WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.XPATH, '//*[@id="pickerSearchField"]')))  # 元素是否可见
         driver.find_element_by_xpath('//*[@id="pickerSearchField"]').send_keys(category)
+
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,
             '//*[@id="__PWS_ROOT__"]/div[1]/div[2]/div/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div/div/div/div')))  # 元素是否可见
         driver.find_element_by_xpath(
             '//*[@id="__PWS_ROOT__"]/div[1]/div[2]/div/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div/div/div/div').click()
-        try:
-            WebDriverWait(driver, 5).until(
-                lambda driver: driver.find_element(By.XPATH, '//*[@id="__PWS_ROOT__"]/div[1]/div[2]/div/div/div/div/div/div/div[2]/div/div[1]/div/div[1]/a/div/div/div/div/div[1]/img')
-                           or driver.find_element_by_xpath('/html/body/div[4]/div/div/div/div[2]/div/div/div/div[1]/img'))
-        except:
-            driver.close()
-            driver.switch_to.window(handles[0])
-            return True
+
+        possible_xpaths = ['/html/body/div[3]/div/div/div/div[2]/div/div[2]/div/div/div[1]/div/div[1]/div/div[1]/a/div/div/div/div/div[1]/img',
+                           '/html/body/div[4]/div/div/div/div[2]/div/div[2]/div/div/div[1]/div/div[1]/div/div[1]/a/div/div/div/div/div[1]/img'
+                           '//*[@id="__PWS_ROOT__"]/div[1]/div[2]/div/div/div/div/div/div/div[2]/div/div[1]/div/div[1]/a/div/div/div/div/div[1]/img',
+                           '/html/body/div[3]/div/div/div/div[2]/div/div/div/div[2]/div[4]/div[1]/a/div',
+                           '/html/body/div[4]/div/div/div/div[2]/div/div/div/div[1]/img']
+        for xpath in possible_xpaths:
+            try:
+                WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+            except:
+                driver.close()
+                driver.switch_to.window(handles[0])
+                return True
         driver.close()
         driver.switch_to.window(handles[0])
         return True
