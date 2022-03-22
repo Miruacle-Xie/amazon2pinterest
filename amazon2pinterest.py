@@ -4,7 +4,32 @@ import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+import msvcrt
 
+
+def enterPassword(password):
+    print("请输入密码:")
+    # password = []
+    while 1:
+        ch = msvcrt.getch()
+        # 回车
+        if ch == b'\r':
+            msvcrt.putch(b'\n')
+            # print('输入的密码是：%s' % b''.join(li).decode())
+            return True
+        # 退格
+        elif ch == b'\x08':
+            if password:
+                password.pop()
+                msvcrt.putch(b'\b')
+                msvcrt.putch(b' ')
+                msvcrt.putch(b'\b')
+        # Esc
+        elif ch == b'\x1b':
+            return False
+        else:
+            password.append(ch)
+            msvcrt.putch(b'*')
 
 def loginPinterest(driver, account, password):
     driver.get("https://www.pinterest.com/")
@@ -81,7 +106,10 @@ if __name__ == '__main__':
     if ws.cell(1, 3).value is not None:
         password = ws.cell(1, 3).value
     else:
-        password = input("输入密码:")
+        # password = input("输入密码:")
+        password = []
+        enterPassword(password)
+        password = b''.join(password).decode()
     driver = webdriver.Chrome()
     driver.maximize_window()
     loginPinterest(driver, account, password)
