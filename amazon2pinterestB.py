@@ -40,7 +40,8 @@ def loginPinterest(driver, account, password):
     time.sleep(0.5)
     driver.find_element_by_xpath(
         '//*[@id="__PWS_ROOT__"]/div[1]/div/div/main/div[1]/div[2]/div[2]/div/div/div/div/div/div/div/div[4]/form/div[5]/button/div').click()
-    possible_xpaths = ['//*[@id="HeaderContent"]/div/div/div[2]/div/div/div/div[5]/div[5]/button/div/div', '//*[@id="HeaderContent"]/div/div/div/div/div[2]/div/div/div/div[10]/button/div/div']
+
+    possible_xpaths = ['//*[@id="HeaderContent"]/div/div/div/div/div[2]/div/div/div/div[10]/button/div/div', '//*[@id="HeaderContent"]/div/div/div[2]/div/div/div/div[5]/div[5]/button/div/div', '//*[@id="HeaderContent"]/div/div/div/div/div[2]/div/div/div/div[10]/button/div/div']
     for xpath in possible_xpaths:
         try:
             WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -59,8 +60,12 @@ def amazon2pinterest(driver, category, ASIN):
     url_ASIN = ASIN
     url = url_head + url_ASIN + url_end
     driver.get(url)
+    htmltext = driver.page_source
+    if "We couldn't find that page" in htmltext:
+        print("ASIN变狗")
+        return -2
     try:
-        WebDriverWait(driver, 30).until(
+        WebDriverWait(driver, 60).until(
             EC.visibility_of_element_located((By.XPATH, '//*[@id="pinterest"]/i')))  # 元素是否可见
         driver.find_element_by_xpath('//*[@id="pinterest"]/i').click()
         handles = driver.window_handles
@@ -69,7 +74,7 @@ def amazon2pinterest(driver, category, ASIN):
             EC.presence_of_element_located((By.XPATH, '//*[@id="pickerSearchField"]')))  # 元素是否可见
         driver.find_element_by_xpath('//*[@id="pickerSearchField"]').send_keys(category)
 
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,
+        WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH,
             '//*[@id="__PWS_ROOT__"]/div[1]/div[2]/div/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div/div/div/div')))  # 元素是否可见
         driver.find_element_by_xpath(
             '//*[@id="__PWS_ROOT__"]/div[1]/div[2]/div/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div/div/div/div').click()
@@ -85,15 +90,15 @@ def amazon2pinterest(driver, category, ASIN):
             except:
                 driver.close()
                 driver.switch_to.window(handles[0])
-                return True
+                return 0
         driver.close()
         driver.switch_to.window(handles[0])
-        return True
+        return 0
     except Exception as e:
         print("未找到元素")
         driver.close()
         driver.switch_to.window(handles[0])
-        return False
+        return -1
 
 
 if __name__ == '__main__':
@@ -125,10 +130,14 @@ if __name__ == '__main__':
         for i in range(2, row + 1):
             print(i)
             result = amazon2pinterest(driver, category, ws.cell(i, 1).value)
-            if not result:
-                ws.cell(i, 2).value = '钉失败'
-            else:
+            if result == 0:
                 ws.cell(i, 2).value = '钉成功'
+            elif result == -1:
+                ws.cell(i, 2).value = '钉失败'
+            elif result == -2:
+                ws.cell(i, 2).value = 'ASIN变狗'
+            else:
+                ws.cell(i, 2).value = '未知原因'
             wb.save(fileName.replace("\"", ""))
         driver.quit()
     except:
